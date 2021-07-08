@@ -1,0 +1,124 @@
+#This program is used to compute odds in The Binding of Isaac: Four Souls
+import math
+def factorial(x):
+    if x==0:
+        return 1;
+    else:
+        numTimes = x-1
+        while (numTimes >= 1):
+            x = x*numTimes
+            numTimes = numTimes - 1
+        return x;
+
+def nCr(n,r):
+    numer = factorial(n)
+    denom = factorial(r)*factorial(n-r)
+    return numer/denom;
+
+def odds(yH,yD,mH,mD,d,h): #where yH is your health, yD is your damage, mH is monster health, mD is monster damage, d is what dice roll is required to deal damage, and h is how much total damage you can prevent with cards in play.
+    if d==1:        #|
+        p = 1       #|
+    elif d==2:      #|          This whole block is to determine the odds
+        p = 5/6     #|          based on the required roll for dealing damage
+    elif d==3:      #|          to monsters. It can also probably be done better.
+        p = 2/3     #|
+    elif d==4:      #|
+        p = 1/2     #|
+    elif d==5:      #|
+        p = 1/3     #|
+    else:           #|
+        p = 1/6     #|
+
+    chances = math.ceil(yH / mD) - 1         #| The amount of chances you have to defeat the monster until your health runs out.
+    req_success = math.ceil(mH / yD)         #| The amount of times you have to deal a successful attack to kill the monster.
+
+    if chances<=1 and h==0:                  #| The probability of rolling the dice and not missing an attack.
+        odds = p**(req_success)
+        print("If you use nothing to aid you, you have a", odds*100, "% chance of winning this fight.")
+    elif chances>1 and h==0:                 #| The probability of winning the fight as a whole.
+        x = 0
+        prob = []
+        while x <= chances:
+            if x == 0:
+                odds = nCr(mH+x,x)*(p)**mH
+                prob.append(odds)
+                x = x + 1
+            else:
+                odds = (nCr(mH+x,x) - nCr((mH+x)-1,mH))*((p)**mH)*(1-p)**x #See note at bottom of code.
+                prob.append(odds)
+                x = x + 1
+        final_probability = sum(prob)
+        print("If you use nothing to aid you, you have a", final_probability*100, "% chance of winning this fight.")
+    else:
+        for y in range(h):
+            h = 1
+            x = 0
+            chances = chances + h
+            prob = []
+            while x <= chances:
+                if x == 0:
+                    odds = nCr(mH+x,x)*(p)**mH
+                    prob.append(odds)
+                    x = x + 1
+                else:
+                    odds = (nCr(mH+x,x) - nCr((mH+x)-1,mH))*((p)**mH)*(1-p)**x
+                    prob.append(odds)
+                    x = x + 1
+            y = y + 1
+            final_probability_with_help = sum(prob)
+            print("You have a", final_probability_with_help*100, "% chance of winning this fight, if you use", y, "card(s) to help you.")
+
+odds(2,1,4,1,4,0) #yH, yD, mH, mD, d, and h respectively.
+#where yH is your health, yD is your damage, mH is monster health, mD is monster damage,
+#and d is what dice roll is required to deal damage.
+
+#***NOTE*** This is the hardest part of the program. What's happening here is we have to compute all of the possible ways you can succeed
+#in a fight. However, this isn't as easy as using factorials and combinatorics, as you will double count a lot of already considered
+#possibilities, which skews the probability. To see how this line works, consider:
+#
+#You: 4 Health, 1 damage
+#Monster: 7 Health, 1 damage, 5+ on dice roll.
+#
+#To calculate these odds, we need to add the probabilities of not failing a single dice roll, failing once, failing twice, and failing
+#3 times. Notice that if we fail 4 times, the combat is over, and we want to compute the odds of a *successful* attack. So, to begin,
+#we compute the odds of not missing a single attack, which in this case would be (1/3)^7. Now, we need to compute the odds of winning,
+#assuming you failed once. To do this, we can look at all of the possibilitiesof 5c1 (5 choose 1), which are as follows:
+# FSSSS
+# SFSSS
+# SSFSS
+# SSSFS
+# SSSSF
+#But, notice that last entry has a failed dice roll at the end. We need to throw this value out as we have already rolled 4 successful
+#dice rolls, and thus do not need to roll a 5th time. So, the probability of rolling 4 successful rolls with 1 failed roll is:
+#5*(1/3^7)*(2/3)
+#Continuing on with the pattern, let us consider the possibility of rolling 4 successful rolls with 2 failed rolls. To do this, we need to
+#consider 6c2. Which is listed below.
+#FFSSSS
+#FSFSSS
+#FSSFSS
+#FSSSFS
+#FSSSSF *
+#SFFSSS
+#SFSFSS
+#SFSSFS
+#SFSSSF *
+#SSFFSS
+#SSFSFS
+#SSFSSF *
+#SSSFFS
+#SSSFSF *
+#SSSSFF *
+#If you were to count these, you'd see that there are 15 outcomes. However, notice each entry marked with an *. These are all of the entries
+#that ended with a failed dice roll, and thus would not occur, as they have already been accounted for in previous cases (those being successful
+#attacks with no failures, and successful attacks with 1 failure.). So, we throw them out. This trend continues as you increase the amount
+#of chances you have to take damageand not die. Now the question becomes, "how do we know how many entries to throw out in each iteration?"
+#After looking at different cases and seeking counsel, I had come up with the original equation used in the code. If we take the example we used
+#above, and expand each iteration out to match forms, we have:
+#
+#0 fail(s): (7c0)*(1/3^7)*(2/3)^0
+#1 fail(s): (8c1 - 7c7)*(1/3^7)*(2/3)^1
+#2 fail(s): (9c2 - 8c7)*(1/3^7)*(2/3)^2
+#3 fail(s): (10c3 - 9c7)*(1/3^7)*(2/3)^3
+#
+#From this example, it is easier to see how the equation used in the code is implemented. Note that we do not consider 4 failures as that would
+#result in the death of our charatcer.
