@@ -1,54 +1,34 @@
 #This program is used to compute odds in The Binding of Isaac: Four Souls
 import math
-def factorial(x):
-    if x==0:
-        return 1;
-    else:
-        numTimes = x-1
-        while (numTimes >= 1):
-            x = x*numTimes
-            numTimes = numTimes - 1
-        return x;
-
 def nCr(n,r):
-    numer = factorial(n)
-    denom = factorial(r)*factorial(n-r)
+    numer = math.factorial(n)
+    denom = math.factorial(r)*math.factorial(n-r)
     return numer/denom;
 
 def odds(yH,yD,mH,mD,d,h): #where yH is your health, yD is your damage, mH is monster health, mD is monster damage, d is what dice roll is required to deal damage, and h is how much total damage you can prevent with cards in play.
-    if d==1:        #|
-        p = 1       #|
-    elif d==2:      #|          This whole block is to determine the odds
-        p = 5/6     #|          based on the required roll for dealing damage
-    elif d==3:      #|          to monsters. It can also probably be done better.
-        p = 2/3     #|
-    elif d==4:      #|
-        p = 1/2     #|
-    elif d==5:      #|
-        p = 1/3     #|
-    else:           #|
-        p = 1/6     #|
+    dice = [0, 1, 5/6, 2/3, 1/2, 1/3, 1/6]   #| Assigns probabilities based on what's labelled on the card.
 
     chances = math.ceil(yH / mD) - 1         #| The amount of chances you have to defeat the monster until your health runs out.
     req_success = math.ceil(mH / yD)         #| The amount of times you have to deal a successful attack to kill the monster.
 
     if chances<=1 and h==0:                  #| The probability of rolling the dice and not missing an attack.
-        odds = p**(req_success)
-        print("If you use nothing to aid you, you have a", odds*100, "% chance of winning this fight.")
+        odds = dice[d]**(req_success)
+        print_odds = "If you use nothing to aid you, you have a {}% chance of winning this fight.".format(odds*100)
+        print(print_odds)
     elif chances>1 and h==0:                 #| The probability of winning the fight as a whole.
         x = 0
         prob = []
         while x <= chances:
             if x == 0:
-                odds = nCr(mH+x,x)*(p)**mH
+                odds = nCr(mH+x,x)*(dice[d])**mH
                 prob.append(odds)
                 x = x + 1
             else:
-                odds = (nCr(mH+x,x) - nCr((mH+x)-1,mH))*((p)**mH)*(1-p)**x #See note at bottom of code.
+                odds = (nCr(mH+x,x) - nCr((mH+x)-1,mH))*((dice[d])**mH)*(1-dice[d])**x #See note at bottom of code.
                 prob.append(odds)
                 x = x + 1
-        final_probability = sum(prob)
-        print("If you use nothing to aid you, you have a", final_probability*100, "% chance of winning this fight.")
+        final_probability = "If you use nothing to aid you, you have a {}% chance of winning this fight.".format(sum(prob*100))
+        print(final_probability)
     else:
         for y in range(h):
             h = 1
@@ -57,18 +37,18 @@ def odds(yH,yD,mH,mD,d,h): #where yH is your health, yD is your damage, mH is mo
             prob = []
             while x <= chances:
                 if x == 0:
-                    odds = nCr(mH+x,x)*(p)**mH
+                    odds = nCr(mH+x,x)*(dice[d])**mH
                     prob.append(odds)
                     x = x + 1
                 else:
-                    odds = (nCr(mH+x,x) - nCr((mH+x)-1,mH))*((p)**mH)*(1-p)**x
+                    odds = (nCr(mH+x,x) - nCr((mH+x)-1,mH))*((dice[d])**mH)*(1-dice[d])**x
                     prob.append(odds)
                     x = x + 1
             y = y + 1
-            final_probability_with_help = sum(prob)
-            print("You have a", final_probability_with_help*100, "% chance of winning this fight, if you use", y, "card(s) to help you.")
+            final_probability_with_help = "You have a {}% chance of winning this fight, if you use {} card(s) to help you.".format(sum(prob)*100,y)
+            print(final_probability_with_help)
 
-odds(2,1,4,1,4,0) #yH, yD, mH, mD, d, and h respectively.
+odds(2,1,4,1,4,1) #yH, yD, mH, mD, d, and h respectively.
 #where yH is your health, yD is your damage, mH is monster health, mD is monster damage,
 #and d is what dice roll is required to deal damage.
 
